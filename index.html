@@ -8,7 +8,8 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#0a0e17;-webkit-tap-highlight-color:transparent}
 canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:manipulation}
-#desc{position:fixed;bottom:20px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.4);font:12px/1.4 system-ui,sans-serif;pointer-events:none;z-index:10;letter-spacing:1px}
+#desc{position:fixed;bottom:16px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.3);font:10px/1.6 system-ui,sans-serif;pointer-events:none;z-index:10;letter-spacing:0.3px}
+#databar{position:fixed;bottom:48px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.25);font:10px/1 system-ui,sans-serif;letter-spacing:1px;pointer-events:none;z-index:10}
 #labels{position:fixed;top:20px;right:20px;text-align:right;pointer-events:none;z-index:10}
 #labels .city{font:10px/1.5 system-ui,sans-serif;color:rgba(255,255,255,0.25);letter-spacing:0.3px;white-space:nowrap}
 </style>
@@ -16,6 +17,7 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:
 <body>
 <canvas id="c"></canvas>
 <div id="desc">temperature waves from 10 cities · tap to disturb</div>
+<div id="databar">Open-Meteo · loading...</div>
 <div id="labels"></div>
 <script>
 // ─── CONFIG ───
@@ -64,6 +66,7 @@ window.addEventListener('resize', resize);
 let waves = [];
 let disturbances = [];
 let fc = 0;
+let lastSwellUpdate = 0;
 
 function initWaves(temps) {
   waves = CITIES.map((city, i) => {
@@ -97,6 +100,7 @@ async function fetchTemps() {
     const data = await res.json();
     initWaves(data.current_weather.temperature);
     updateLabels();
+    lastFetchTime = performance.now();
   } catch(e) {
     const fallback = [35, 32, 30, 28, 22, 18, 15, 14, 10, 5];
     initWaves(fallback);
@@ -176,9 +180,21 @@ function draw() {
     return d.life > 0 && d.radius < 300;
   });
 
+  updateDataBar();
+
   requestAnimationFrame(draw);
 }
 
+let lastFetchTime = performance.now();
+function updateDataBar() {
+  const el = document.getElementById('databar');
+  if (!el || !waves.length) return;
+  const temps = waves.map(w => w.temp);
+  const min = Math.round(Math.min(...temps));
+  const max = Math.round(Math.max(...temps));
+  const ago = Math.round((performance.now() - lastFetchTime) / 1000);
+  el.textContent = `Open-Meteo · 10 cities · ${min}°–${max}°C range · updated ${ago}s ago`;
+}
 fetchTemps();
 setInterval(fetchTemps, 60000);
 draw();

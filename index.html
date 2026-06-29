@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>swell — temperature waves</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0e17;-webkit-tap-highlight-color:transparent}
+canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:manipulation}
+#desc{position:fixed;bottom:20px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.4);font:12px/1.4 system-ui,sans-serif;pointer-events:none;z-index:10;letter-spacing:1px}
+#labels{position:fixed;top:20px;right:20px;text-align:right;pointer-events:none;z-index:10}
+#labels .city{font:10px/1.5 system-ui,sans-serif;color:rgba(255,255,255,0.25);letter-spacing:0.3px;white-space:nowrap}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="desc">temperature waves from 10 cities · tap to disturb</div>
+<div id="labels"></div>
+<script>
+// ─── CONFIG ───
+const C = {
+  palette: {
+    bg: '#0a0e17',
+    accent1: 'rgba(0,188,212,', // cyan-teal
+    accent2: 'rgba(2,119,189,', // deep blue
+    accent3: 'rgba(77,208,225,', // bright cyan
+    accent4: 'rgba(255,255,255,', // white
+  },
+  waveCount: 10,
+  baseAmp: 40,
+  baseFreq: 0.008,
+  ampScale: 2.5,
+  freqScale: 3.0,
+  glowStrength: 15,
+};
+
+// ─── CITIES ───
+const CITIES = [
+  {name:'Dubai',     lat:25.2, lon:55.3},
+  {name:'Bangkok',   lat:13.7, lon:100.5},
+  {name:'Mumbai',    lat:19.1, lon:72.9},
+  {name:'Cairo',     lat:30.0, lon:31.2},
+  {name:'Tokyo',     lat:35.7, lon:139.7},
+  {name:'NYC',       lat:40.7, lon:-74.0},
+  {name:'London',    lat:51.5, lon:-0.1},
+  {name:'Berlin',    lat:52.5, lon:13.4},
+  {name:'Moscow',    lat:55.8, lon:37.6},
+  {name:'Reykjavik', lat:64.1, lon:-21.9},
+];
+
+// ─── CANVAS SETUP ───
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── WAVE STATE ───
+let waves = [];
+let disturbances = [];
+let fc = 0;
+
+function initWaves(temps) {
+  waves = CITIES.map((city, i) => {
+    const t = temps[i] ?? 20;
+    const normTemp = (t + 10) / 50;
+    return {
+      name: city.name,
+      temp: t,
+      norm: normTemp,
+      freq: C.baseFreq + normTemp * C.freqScale * 0.008,
+      amp: C.baseAmp + normTemp * C.ampScale * 30,
+      phase: (i / CITIES.length) * Math.PI * 2,
+      baseY: (i + 0.5) / CITIES.length * H * 0.75 + H * 0.08,
+    };
+  });
+}
+
+function updateLabels() {
+  const el = document.getElementById('labels');
+  el.innerHTML = waves.map(w =>
+    `<div class="city" style="color:rgba(255,255,255,${0.15 + w.norm * 0.35})">${Math.round(w.temp)}° ${w.name}</div>`
+  ).join('');
+}
+
+// ─── API FETCH ───
+async function fetchTemps() {
+  const batchUrl = `https://api.open-meteo.com/v1/forecast?latitude=${CITIES.map(c=>c.lat).join(',')}&longitude=${CITIES.map(c=>c.lon).join(',')}&current_weather=true&temperature_unit=celsius`;
+  try {
+    const res = await fetch(batchUrl);
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    initWaves(data.current_weather.temperature);
+    updateLabels();
+  } catch(e) {
+    const fallback = [35, 32, 30, 28, 22, 18, 15, 14, 10, 5];
+    initWaves(fallback);
+    updateLabels();
+  }
+}
+
+// ─── DISTURBANCE ───
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  disturbances.push({x: e.clientX - rect.left, y: e.clientY - rect.top, life: 1.0, radius: 0});
+});
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length) {
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    disturbances.push({x: t.clientX - rect.left, y: t.clientY - rect.top, life: 1.0, radius: 0});
+  }
+}, {passive: true});
+
+// ─── DRAW ───
+function draw() {
+  fc++;
+  ctx.fillStyle = 'rgba(10,14,23,0.92)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle bottom glow
+  const grad = ctx.createRadialGradient(W/2, H*0.9, 0, W/2, H*0.9, H*0.5);
+  grad.addColorStop(0, 'rgba(0,188,212,0.04)');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  for (const w of waves) {
+    ctx.save();
+    ctx.beginPath();
+    let started = false;
+    const steps = Math.floor(W / 2);
+    for (let i = 0; i <= steps; i++) {
+      const x = (i / steps) * W;
+      const t = x / W;
+      let y = w.baseY;
+      y += Math.sin(t * Math.PI * 2 * w.freq * 100 + fc * 0.02 + w.phase) * w.amp;
+      y += Math.sin(t * Math.PI * 2 * w.freq * 50 + fc * 0.015 + w.phase * 1.5) * w.amp * 0.3;
+      y += Math.sin(t * Math.PI * 4 + fc * 0.01) * 8;
+
+      for (const d of disturbances) {
+        const dx = x - d.x;
+        const dy = y - d.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < d.radius) {
+          y += Math.sin(dist * 0.05 - d.life * 4) * d.life * 20 * (1 - dist/d.radius);
+        }
+      }
+
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    }
+
+    const alpha = 0.15 + w.norm * 0.5;
+    ctx.strokeStyle = `rgba(0,188,212,${alpha})`;
+    ctx.lineWidth = 1.5 + w.norm * 3;
+    ctx.shadowColor = `rgba(0,188,212,${alpha * 0.6})`;
+    ctx.shadowBlur = C.glowStrength;
+    ctx.stroke();
+
+    ctx.strokeStyle = `rgba(77,208,225,${alpha * 0.4})`;
+    ctx.lineWidth = 0.8;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  disturbances = disturbances.filter(d => {
+    d.life -= 0.008;
+    d.radius += 3;
+    return d.life > 0 && d.radius < 300;
+  });
+
+  requestAnimationFrame(draw);
+}
+
+fetchTemps();
+setInterval(fetchTemps, 60000);
+draw();
+</script>
+</body>
+</html>

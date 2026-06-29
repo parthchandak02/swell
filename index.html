@@ -9,7 +9,7 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#0a0e17;-webkit-tap-highlight-color:transparent}
 canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:manipulation}
 #desc{position:fixed;bottom:16px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.3);font:10px/1.6 system-ui,sans-serif;pointer-events:none;z-index:10;letter-spacing:0.3px}
-#databar{position:fixed;bottom:48px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.25);font:10px/1 system-ui,sans-serif;letter-spacing:1px;pointer-events:none;z-index:10}
+#databar{position:fixed;bottom:48px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.3);font:10px/1 system-ui,sans-serif;letter-spacing:0.3px;pointer-events:none;z-index:10}
 #labels{position:fixed;top:20px;right:20px;text-align:right;pointer-events:none;z-index:10}
 #labels .city{font:10px/1.5 system-ui,sans-serif;color:rgba(255,255,255,0.25);letter-spacing:0.3px;white-space:nowrap}
 </style>
@@ -193,7 +193,8 @@ function updateDataBar() {
   const min = Math.round(Math.min(...temps));
   const max = Math.round(Math.max(...temps));
   const ago = Math.round((performance.now() - lastFetchTime) / 1000);
-  el.textContent = `Open-Meteo · 10 cities · ${min}°–${max}°C range · updated ${ago}s ago`;
+  const phaseDeg = ((fc * 0.02 * 180 / Math.PI) % 360).toFixed(0);
+  el.textContent = `Open-Meteo · 10 cities · updated ${ago}s ago · ${min}°–${max}°C range · wave φ ${phaseDeg}°`;
 }
 fetchTemps();
 setInterval(fetchTemps, 60000);

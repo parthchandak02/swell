@@ -1,19 +1,21 @@
-# flux — forex-driven cellular automata
+# swell
 
-Live exchange rates shape the evolution of a cellular automata colony on a circuit-board grid.
+Temperature waves from 10 world cities — Dark Abyss style.
 
-**Visual Style:** Dark — Circuit (digital precision, dot-grid background, green/blue/red palette, right-angle cells)
+**Visual Style:** Dark — Abyss (deep navy background, cyan-teal temperature gradients)
 
-**Data Source:** Frankfurter API (EUR/USD, EUR/GBP, EUR/JPY exchange rates)
+**Data Source:** Open-Meteo API (live temperatures from 10 cities)
 
 **How it works:**
-- Tap any cell to toggle it alive or dead
-- Tap empty space to pause or resume the simulation
-- EUR/USD, EUR/GBP, and EUR/JPY rates are fetched every 30 seconds from the Frankfurter API
-- Rate direction (up/down/flat) tints all alive cells green, red, or pale green
-- Volatility between rate updates controls the evolution speed (higher volatility = faster generations)
-- The grid initializes randomly and runs Conway's B3/S23 rule with toroidal wrapping
+- Fetches live temperatures from 10 global cities every few minutes
+- Temperature values drive wave amplitude and color across the canvas
+- Tap to disturb the wave field and inject new motion
+- Data transparency labels show source and last update time
 
-**Live:** https://parthchandak02.github.io/flux/
+**Live:** https://parthchandak02.github.io/swell/
 
 **Tech:** Native Canvas 2D, single HTML file, zero dependencies.
+
+---
+
+Part of the [daily generative builds](https://github.com/parthchandak02/parthchandak02#featured-projects) series: [tessellate](https://parthchandak02.github.io/tessellate/) · [flora](https://parthchandak02.github.io/flora/) · [grow](https://parthchandak02.github.io/grow/) · [drift](https://parthchandak02.github.io/drift/) · [trace](https://parthchandak02.github.io/trace/) · [resonate](https://parthchandak02.github.io/resonate/) · [swell](https://parthchandak02.github.io/swell/) · [flux](https://parthchandak02.github.io/flux/)

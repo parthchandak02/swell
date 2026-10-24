@@ -21,9 +21,9 @@
 
 <br><br>
 
-<a href="https://parthchandak02.github.io/swell/"><img src="docs/assets/readme/hero.jpg" width="100%" alt="Ten glowing cyan sine-wave lines stacked across a deep navy canvas, brighter and taller at the top, with a city temperature list top-right from 35 degrees Dubai to 5 degrees Reykjavik"></a>
+<a href="https://parthchandak02.github.io/swell/"><img src="docs/assets/readme/hero.jpg" width="100%" alt="Ten glowing cyan sine-wave lines stacked across a deep navy canvas, brighter and taller at the top, with a live city temperature list top-right from 33 degrees Dubai to 1 degree Reykjavik and a status line reading live at the bottom"></a>
 
-<sub>Live capture, 22 October 2026, a moment after a click near the centre. The temperatures shown are the built-in fallback values; see the note below.</sub>
+<sub>Live capture, 23 October 2026. Real Open-Meteo temperatures.</sub>
 
 </div>
 

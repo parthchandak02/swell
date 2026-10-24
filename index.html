@@ -98,13 +98,22 @@ async function fetchTemps() {
     const res = await fetch(batchUrl);
     if (!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
-    initWaves(data.current_weather.temperature);
+    // A multi-city request returns an array of results, one per city, in request order
+    const results = Array.isArray(data) ? data : [data];
+    const temps = results.map(d => d?.current_weather?.temperature);
+    if (temps.length !== CITIES.length || temps.some(t => typeof t !== 'number')) {
+      throw new Error('Unexpected Open-Meteo response');
+    }
+    initWaves(temps);
     updateLabels();
     lastFetchTime = performance.now();
+    dataSource = 'live';
   } catch(e) {
+    console.warn('Open-Meteo fetch failed, showing fallback temperatures:', e);
     const fallback = [35, 32, 30, 28, 22, 18, 15, 14, 10, 5];
     initWaves(fallback);
     updateLabels();
+    dataSource = 'fallback';
   }
 }
 
@@ -186,6 +195,7 @@ function draw() {
 }
 
 let lastFetchTime = performance.now();
+let dataSource = 'loading';
 function updateDataBar() {
   const el = document.getElementById('databar');
   if (!el || !waves.length) return;
@@ -194,7 +204,7 @@ function updateDataBar() {
   const max = Math.round(Math.max(...temps));
   const ago = Math.round((performance.now() - lastFetchTime) / 1000);
   const phaseDeg = ((fc * 0.02 * 180 / Math.PI) % 360).toFixed(0);
-  el.textContent = `Open-Meteo · 10 cities · updated ${ago}s ago · ${min}°–${max}°C range · wave φ ${phaseDeg}°`;
+  el.textContent = `Open-Meteo · 10 cities · ${dataSource} · updated ${ago}s ago · ${min}°–${max}°C range · wave φ ${phaseDeg}°`;
 }
 fetchTemps();
 setInterval(fetchTemps, 60000);

@@ -42,15 +42,10 @@ a Canvas 2D background.
 | Same value | Line brightness and thickness, and how bright the city's label is |
 | City order (Dubai, Bangkok, Mumbai, Cairo, Tokyo, NYC, London, Berlin, Moscow, Reykjavik) | Vertical position, top to bottom |
 
-The page refetches every 60 seconds. The bar at the bottom shows the temperature range across
-the ten cities and the seconds since the last update. Click or tap anywhere to send a ripple
+The page refetches every 60 seconds. The bar at the bottom shows whether the readings are
+`live` or the built-in `fallback` (35 down to 5 °C, used only if the request fails), the
+temperature range across the ten cities and the seconds since the last update. Click or tap anywhere to send a ripple
 through the lines near that point.
-
-**Known issue.** Open-Meteo answers a multi-city request with an array of results, but the page
-reads `data.current_weather.temperature` as if it were a single object. The read throws, and
-the page falls back to fixed values (35, 32, 30, 28, 22, 18, 15, 14, 10, 5 °C) every time, so
-the live site currently shows the fallback rather than real temperatures. Mapping over the
-array (`data.map(d => d.current_weather.temperature)`) would fix it.
 
 ## Run it
 
